@@ -27,6 +27,7 @@ import org.kohsuke.jnt.JavaNet;
  * <p>
  * This has some hard-coded knowledge about groups that Confluence expects.
  *
+ * @see <a href="http://confluence.atlassian.com/display/CROWD/Creating+a+Custom+Directory+Connector">guide</a>
  * @author Kohsuke Kawaguchi
  */
 public class JavaNetDirectory extends AbstractRemoteDirectory {
