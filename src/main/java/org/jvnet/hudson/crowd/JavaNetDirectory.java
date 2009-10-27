@@ -15,8 +15,8 @@ import com.atlassian.crowd.search.Entity;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
-import java.util.Arrays;
 import java.util.ArrayList;
+import static java.util.Arrays.asList;
 
 import org.kohsuke.jnt.ProcessingException;
 import org.kohsuke.jnt.JavaNet;
@@ -34,28 +34,27 @@ public class JavaNetDirectory extends AbstractRemoteDirectory {
     private final Map<String,GroupImpl> groups = new HashMap<String,GroupImpl>();
     private final GroupImpl confluenceUsers = new GroupImpl(this, CONFLUENCE_USERS);
     private final GroupImpl confluenceAdministrators = new GroupImpl(this,CONFLUENCE_ADMINISTRATORS);
+    private final GroupImpl jiraUsers = new GroupImpl(this,JIRA_USERS);
+    private final GroupImpl jiraDevelopers = new GroupImpl(this,JIRA_DEVELOPERS);
+    private final GroupImpl jiraAdministrators = new GroupImpl(this,JIRA_ADMINISTRATORS);
 
     public JavaNetDirectory() {
-        groups.put(confluenceUsers.getName(), confluenceUsers);
-        groups.put(confluenceAdministrators.getName(), confluenceAdministrators);
+        for (GroupImpl g : asList(confluenceUsers,confluenceAdministrators,jiraUsers,jiraDevelopers,jiraAdministrators))
+            groups.put(g.getName(), g);
     }
 
-    @Override
     public String getDescriptiveName() {
         return "java.net user database";
     }
 
-    @Override
     public User findUserByName(String name) throws ObjectNotFoundException {
         return findUserWithAttributesByName(name);
     }
 
-    @Override
     public UserWithAttributes findUserWithAttributesByName(final String name) throws ObjectNotFoundException {
         return new UserImpl(this, name);
     }
 
-    @Override
     public User authenticate(final String name, PasswordCredential password) throws ObjectNotFoundException, InactiveAccountException, InvalidAuthenticationException {
         try {
             System.out.println("Authenticating "+name);
@@ -74,25 +73,27 @@ public class JavaNetDirectory extends AbstractRemoteDirectory {
         }
     }
 
-    @Override
     public Group findGroupByName(String name) throws ObjectNotFoundException {
         return findGroupWithAttributesByName(name);
     }
 
-    @Override
     public GroupWithAttributes findGroupWithAttributesByName(String name) throws ObjectNotFoundException {
         return groups.get(name);
     }
 
     @Override
     public List searchGroups(EntityQuery entityQuery) {
-        return Arrays.asList(confluenceAdministrators,confluenceUsers);
+        return asList(confluenceAdministrators,confluenceUsers,jiraUsers,jiraAdministrators,jiraDevelopers);
     }
 
     @Override
     public boolean isUserDirectGroupMember(String userName, String groupName) {
         if (groupName.equals(CONFLUENCE_USERS))     return true;
-        return userName.indexOf("kohsuke")>=0;
+        if (groupName.equals(JIRA_USERS))     return true;
+
+        // TODO: how to handle jira-developers category?
+
+        return userName.equals("kohsuke");
     }
 
     @Override
@@ -111,6 +112,10 @@ public class JavaNetDirectory extends AbstractRemoteDirectory {
 
     private static final String CONFLUENCE_USERS          = "confluence-users";
     private static final String CONFLUENCE_ADMINISTRATORS = "confluence-administrators";
+
+    private static final String JIRA_USERS          = "jira-users";
+    private static final String JIRA_DEVELOPERS     = "jira-developers";
+    private static final String JIRA_ADMINISTRATORS = "jira-administrators";
 
     private static final boolean testMode = Boolean.getBoolean(JavaNetDirectory.class.getName()+".test");
 }

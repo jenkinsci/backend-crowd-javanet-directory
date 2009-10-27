@@ -16,27 +16,22 @@ public class GroupImpl extends EmptyAttributes implements GroupWithAttributes {
         this.name = name;
     }
 
-    @Override
     public GroupType getType() {
         return GROUP;
     }
 
-    @Override
     public boolean isActive() {
         return true;
     }
 
-    @Override
     public String getDescription() {
         return name;
     }
 
-    @Override
     public Long getDirectoryId() {
         return directory.getDirectoryId();
     }
 
-    @Override
     public String getName() {
         return name;
     }
