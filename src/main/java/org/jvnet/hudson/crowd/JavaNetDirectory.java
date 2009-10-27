@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 import static java.util.Arrays.asList;
 
 import org.kohsuke.jnt.ProcessingException;
@@ -38,6 +39,8 @@ public class JavaNetDirectory extends AbstractRemoteDirectory {
     private final GroupImpl jiraDevelopers = new GroupImpl(this,JIRA_DEVELOPERS);
     private final GroupImpl jiraAdministrators = new GroupImpl(this,JIRA_ADMINISTRATORS);
 
+    private final ConcurrentHashMap<String,String> authCache = new ConcurrentHashMap<String, String>();
+
     public JavaNetDirectory() {
         for (GroupImpl g : asList(confluenceUsers,confluenceAdministrators,jiraUsers,jiraDevelopers,jiraAdministrators))
             groups.put(g.getName(), g);
@@ -58,13 +61,19 @@ public class JavaNetDirectory extends AbstractRemoteDirectory {
     public User authenticate(final String name, PasswordCredential password) throws ObjectNotFoundException, InactiveAccountException, InvalidAuthenticationException {
         try {
             System.out.println("Authenticating "+name);
+            String p = password.getCredential();
             if (testMode) {
                 // during test, don't hit java.net, and just use username==password
-                if (!name.equals(password.getCredential()))
+                if (!name.equals(p))
                     throw new InvalidAuthenticationException("Failed to authenticate "+name);
             } else {
                 // in production, do the real thing
-                JavaNet.connect(name,password.getCredential());
+                String d = DigestUtil.getDigestOf(p);
+                boolean authenticated = d.equals(authCache.get(name));
+                if (!authenticated) {// cache failed
+                    JavaNet.connect(name,p);
+                    authCache.put(name,d); // cache this password for the future
+                }
             }
             return new UserImpl(this,name);
         } catch (ProcessingException e) {
