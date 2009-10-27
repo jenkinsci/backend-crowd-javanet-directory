@@ -109,8 +109,7 @@ public class JavaNetDirectory extends AbstractRemoteDirectory {
     @Override
     public List searchGroups(EntityQuery entityQuery) {
         LOGGER.fine("searchGroups: "+entityQuery);
-
-        return asList(confluenceAdministrators,confluenceUsers,jiraUsers,jiraAdministrators,jiraDevelopers);
+        return new ArrayList<GroupImpl>(groups.values());
     }
 
     /**
