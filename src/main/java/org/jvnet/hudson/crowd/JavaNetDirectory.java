@@ -99,6 +99,7 @@ public class JavaNetDirectory extends AbstractRemoteDirectory {
     public boolean isUserDirectGroupMember(String userName, String groupName) {
         if (groupName.equals(CONFLUENCE_USERS))     return true;
         if (groupName.equals(JIRA_USERS))     return true;
+        if (groupName.equals(JIRA_ADMINISTRATORS) && userName.equals("abayer"))     return true;
 
         // TODO: how to handle jira-developers category?
 
