@@ -11,18 +11,16 @@ import com.atlassian.crowd.search.Entity;
 import com.atlassian.crowd.search.query.entity.EntityQuery;
 import com.atlassian.crowd.search.query.entity.restriction.NullRestriction;
 import com.atlassian.crowd.search.query.membership.MembershipQuery;
-import org.kohsuke.jnt.JavaNet;
-import org.kohsuke.jnt.ProcessingException;
+import org.kohsuke.jnt.JavaNetRealm;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.File;
 import java.io.IOException;
+import java.util.AbstractList;
 import java.util.ArrayList;
 import static java.util.Arrays.asList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,22 +42,15 @@ public class JavaNetDirectory extends AbstractRemoteDirectory {
     private final GroupImpl jiraDevelopers = new GroupImpl(this,JIRA_DEVELOPERS);
     private final GroupImpl jiraAdministrators = new GroupImpl(this,JIRA_ADMINISTRATORS);
 
-    private final ConcurrentHashMap<String,String> authCache = new ConcurrentHashMap<String, String>();
-
-    private final Map<String,UserImpl> allUsers = new HashMap<String,UserImpl>();
+    private final JavaNetRealm realm;
+    private final File groupMapping;
 
     public JavaNetDirectory() {
         for (GroupImpl g : asList(confluenceUsers,confluenceAdministrators,jiraUsers,jiraDevelopers,jiraAdministrators))
             groups.put(g.getName(), g);
 
-        try {
-            BufferedReader r = new BufferedReader(new FileReader("/home/crowd/users.txt"));
-            String name;
-            while ((name=r.readLine())!=null)
-                allUsers.put(name,findUserByName(name));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        groupMapping = new File("/home/crowd/groups");
+        realm = new JavaNetRealm(new File("/home/crowd/users"));
     }
 
     public String getDescriptiveName() {
@@ -84,15 +75,11 @@ public class JavaNetDirectory extends AbstractRemoteDirectory {
                     throw new InvalidAuthenticationException("Failed to authenticate "+name);
             } else {
                 // in production, do the real thing
-                String d = DigestUtil.getDigestOf(p);
-                boolean authenticated = d.equals(authCache.get(name));
-                if (!authenticated) {// cache failed
-                    JavaNet.connect(name,p);
-                    authCache.put(name,d); // cache this password for the future
-                }
+                if (!realm.authenticate(name,password.getCredential()))
+                    throw new InvalidAuthenticationException("Failed to authenticate "+name);
             }
             return new UserImpl(this,name);
-        } catch (ProcessingException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             throw new InvalidAuthenticationException("Failed to authenticate "+name,e);
         }
@@ -120,19 +107,24 @@ public class JavaNetDirectory extends AbstractRemoteDirectory {
     @Override
     public List searchUsers(EntityQuery entityQuery) {
         LOGGER.fine("searchUsers: "+entityQuery);
-        return new ArrayList<UserImpl>(allUsers.values());
+        final List<String> all = realm.getAll();
+        return new AbstractList<UserImpl>() {
+            public UserImpl get(int index) {
+                return findUserByName(all.get(index));
+            }
+
+            public int size() {
+                return all.size();
+            }
+        };
     }
 
     @Override
     public boolean isUserDirectGroupMember(String userName, String groupName) {
         if (groupName.equals(CONFLUENCE_USERS))     return true;
         if (groupName.equals(JIRA_USERS))     return true;
-        if (groupName.equals(JIRA_ADMINISTRATORS) && userName.equals("abayer"))     return true;
 
-        // TODO: how to handle jira-developers category?
-        if (groupName.equals(JIRA_DEVELOPERS) && userName.startsWith("a"))     return true;
-
-        return userName.equals("kohsuke");
+        return new File(groupMapping,groupName+'/'+userName).exists();
     }
 
     @Override
@@ -150,7 +142,7 @@ public class JavaNetDirectory extends AbstractRemoteDirectory {
         if (q.getEntityToMatch().getEntityType()==Entity.GROUP && q.getEntityToReturn().getEntityType()==Entity.USER) {
             // looking up users by the group
             List<String> r = new ArrayList<String>();
-            for (String user : allUsers.keySet()) {
+            for (String user : realm.getAll()) {
                 if (isUserDirectGroupMember(user,q.getEntityNameToMatch()))
                     r.add(user);
             }
