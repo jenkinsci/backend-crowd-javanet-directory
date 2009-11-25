@@ -78,7 +78,7 @@
     <dependency>
       <groupId>javanettasks</groupId>
       <artifactId>javanettasks</artifactId>
-      <version>1.0.26-SNAPSHOT</version>
+      <version>1.0.26</version>
       <exclusions>
         <exclusion>
           <groupId>xerces</groupId>
