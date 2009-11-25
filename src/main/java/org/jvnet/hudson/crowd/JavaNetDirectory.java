@@ -69,7 +69,7 @@ public class JavaNetDirectory extends AbstractRemoteDirectory {
         try {
             System.out.println("Authenticating "+name);
             String p = password.getCredential();
-            if (testMode) {
+            if (new File("/home/crowd/test-mode").exists()) {
                 // during test, don't hit java.net, and just use username==password
                 if (!name.equals(p))
                     throw new InvalidAuthenticationException("Failed to authenticate "+name);
@@ -159,8 +159,6 @@ public class JavaNetDirectory extends AbstractRemoteDirectory {
     private static final String JIRA_USERS          = "jira-users";
     private static final String JIRA_DEVELOPERS     = "jira-developers";
     private static final String JIRA_ADMINISTRATORS = "jira-administrators";
-
-    private static final boolean testMode = Boolean.getBoolean(JavaNetDirectory.class.getName()+".test");
 
     private static final Logger LOGGER = Logger.getLogger(JavaNetDirectory.class.getName());
 
