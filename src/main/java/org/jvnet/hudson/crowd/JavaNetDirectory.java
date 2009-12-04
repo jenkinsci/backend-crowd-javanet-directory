@@ -68,6 +68,9 @@ public class JavaNetDirectory extends AbstractRemoteDirectory {
     public User authenticate(final String name, PasswordCredential password) throws ObjectNotFoundException, InactiveAccountException, InvalidAuthenticationException {
         try {
             System.out.println("Authenticating "+name);
+            if (name.contains("@"))
+                throw new InvalidAuthenticationException("Use your user ID for login, not the e-mail address");
+            
             String p = password.getCredential();
             if (new File("/home/crowd/test-mode").exists()) {
                 // during test, don't hit java.net, and just use username==password
