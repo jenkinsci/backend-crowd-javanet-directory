@@ -41,12 +41,15 @@ public class JavaNetDirectory extends AbstractRemoteDirectory {
     private final GroupImpl jiraUsers = new GroupImpl(this,JIRA_USERS);
     private final GroupImpl jiraDevelopers = new GroupImpl(this,JIRA_DEVELOPERS);
     private final GroupImpl jiraAdministrators = new GroupImpl(this,JIRA_ADMINISTRATORS);
+    private final GroupImpl scisUsers = new GroupImpl(this,SCIS_USERS);
+    private final GroupImpl scisDevelopers = new GroupImpl(this,SCIS_DEVELOPERS);
+
 
     private final JavaNetRealm realm;
     private final File groupMapping;
 
     public JavaNetDirectory() {
-        for (GroupImpl g : asList(confluenceUsers,confluenceAdministrators,jiraUsers,jiraDevelopers,jiraAdministrators))
+        for (GroupImpl g : asList(confluenceUsers,confluenceAdministrators,jiraUsers,jiraDevelopers,jiraAdministrators,scisUsers,scisDevelopers))
             groups.put(g.getName(), g);
 
         groupMapping = new File("/home/crowd/groups");
@@ -162,6 +165,8 @@ public class JavaNetDirectory extends AbstractRemoteDirectory {
     private static final String JIRA_USERS          = "jira-users";
     private static final String JIRA_DEVELOPERS     = "jira-developers";
     private static final String JIRA_ADMINISTRATORS = "jira-administrators";
+    private static final String SCIS_DEVELOPERS     = "scis-developers";
+    private static final String SCIS_USERS          = "scis-users";
 
     private static final Logger LOGGER = Logger.getLogger(JavaNetDirectory.class.getName());
 
